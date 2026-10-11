@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --bg: var(--figma-color-bg, #fff);
+    --bg2: var(--figma-color-bg-secondary, #f5f5f5);
+    --text: var(--figma-color-text, #111);
+    --muted: var(--figma-color-text-secondary, #666);
+    --border: var(--figma-color-border, #e3e3e3);
+    --accent: var(--figma-color-bg-brand, #0d99ff);
+    --ok: #14ae5c;
+    --err: #f24822;
+    --warn: #ffa629;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 12px; font: 12px/1.4 Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 6px; }
+  .row { display: flex; gap: 6px; align-items: center; }
+  input, textarea, select { width: 100%; font: inherit; color: var(--text); background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; }
+  textarea { font-family: ui-monospace, Menlo, monospace; font-size: 11px; resize: vertical; min-height: 110px; }
+  button { font: inherit; font-weight: 500; border: 0; border-radius: 4px; padding: 6px 10px; cursor: pointer; background: var(--accent); color: #fff; white-space: nowrap; }
+  button.secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border); }
+  .status { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.on { background: var(--ok); } .dot.wait { background: var(--warn); } .dot.off { background: var(--err); }
+  #log { height: 150px; overflow: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 6px; font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; white-space: pre-wrap; word-break: break-word; }
+  .e { color: var(--err); } .k { color: var(--ok); } .m { color: var(--muted); }
+  .conn { border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-top: 8px; }
+  .conn .title { font-weight: 600; }
+  .conn .hint { color: var(--muted); font-size: 11px; margin-top: 4px; }
+</style>
+</head>
+<body>
+  <h2>Подключения</h2>
+  <div class="conn" id="conn-local">
+    <div class="row" style="justify-content: space-between">
+      <div class="status"><span class="dot off" data-dot></span><span data-status>Компьютер: не подключено</span></div>
+      <button data-toggle>Подключить</button>
+    </div>
+    <div class="row" style="margin-top: 6px"><input id="url" placeholder="ws://localhost:3055" /></div>
+    <div class="row" style="margin-top: 6px">
+      <input id="token" placeholder="Токен моста (необязательно)" />
+      <label class="row m" style="width: auto; white-space: nowrap"><input id="auto" type="checkbox" style="width: auto" /> авто</label>
+    </div>
+    <div class="hint">Claude Desktop и сессии Claude Code на этом компьютере.</div>
+  </div>
+  <div class="conn" id="conn-cloud">
+    <div class="row" style="justify-content: space-between">
+      <div class="status"><span class="dot off" data-dot></span><span data-status>Облако: не подключено</span></div>
+      <button data-toggle>Подключить</button>
+    </div>
+    <div class="row" style="margin-top: 6px">
+      <input id="cloudUrl" placeholder="wss://…workers.dev/ws/<токен>" />
+      <label class="row m" style="width: auto; white-space: nowrap"><input id="cloudAuto" type="checkbox" style="width: auto" /> авто</label>
+    </div>
+    <div class="hint">Облачные сессии Claude Code. Адрес — со стартовой страницы вашего ретранслятора.</div>
+  </div>
+
+  <h2>Ручная команда</h2>
+  <div class="row" style="margin-bottom: 6px">
+    <select id="example">
+      <option value="">— пример —</option>
+      <option value="ping">ping</option>
+      <option value="slide">Слайд 1920×1080 с заголовком</option>
+      <option value="cards">Три карточки (auto layout)</option>
+      <option value="svg">Иконка из SVG</option>
+      <option value="selection">Что выделено</option>
+    </select>
+  </div>
+  <textarea id="cmd" spellcheck="false">{ "command": "ping" }</textarea>
+  <div class="row" style="margin-top: 6px; justify-content: flex-end">
+    <button class="secondary" id="clear">Очистить лог</button>
+    <button id="run">Выполнить</button>
+  </div>
+
+  <h2>Лог</h2>
+  <div id="log"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const DEFAULT_URL = "ws://localhost:3055";
+  let seq = 0;
+  // Внутренний id команды → откуда пришла. Префикс источника не даёт перепутать одинаковые id
+  // от разных подключений.
+  const pending = new Map(); // key -> { conn | null, id, started }
+
+  // ---------- Лог ----------
+  function log(text, cls) {
+    const line = document.createElement("div");
+    if (cls) line.className = cls;
+    line.textContent = `${new Date().toLocaleTimeString()}  ${text}`;
+    $("log").appendChild(line);
+    while ($("log").childNodes.length > 300) $("log").firstChild.remove();
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+  const short = (v, n = 300) => { const s = JSON.stringify(v); return s && s.length > n ? s.slice(0, n) + "…" : s; };
+
+  // ---------- Связь с code.ts ----------
+  const toPlugin = (msg) => parent.postMessage({ pluginMessage: msg }, "*");
+
+  function runCommand(conn, id, command, params) {
+    const key = (conn ? conn.name : "manual") + "|" + id;
+    pending.set(key, { conn, id, started: performance.now() });
+    toPlugin({ type: "command", id: key, command, params: params || {} });
+  }
+
+  window.onmessage = (event) => {
+    const msg = event.data && event.data.pluginMessage;
+    if (!msg) return;
+    if (msg.type === "settings") return applySettings(msg.settings);
+    if (msg.type !== "result") return;
+    const meta = pending.get(msg.id);
+    pending.delete(msg.id);
+    if (!meta) return;
+    const ms = Math.round(performance.now() - meta.started);
+    const tag = (meta.conn ? meta.conn.label + " " : "") + meta.id;
+    if (msg.error) log(`✗ ${tag} (${ms} мс): ${msg.error}`, "e");
+    else log(`✓ ${tag} (${ms} мс): ${short(msg.result)}`, "k");
+    if (meta.conn) meta.conn.reply({ type: "result", id: meta.id, result: msg.result, error: msg.error });
+  };
+
+  // ---------- Подключения ----------
+  // Одно и то же устройство: локальный мост (Claude Desktop, локальные сессии) и облачный
+  // ретранслятор (облачные сессии). Каждое переподключается само, пока включено.
+  function Connection(name, label, box, getUrl, getToken) {
+    const dot = box.querySelector("[data-dot]");
+    const status = box.querySelector("[data-status]");
+    const toggle = box.querySelector("[data-toggle]");
+    const c = { name, label, want: false, ws: null, retry: 0, timer: null, keepAlive: null };
+
+    function set(state, text) {
+      dot.className = "dot " + state;
+      status.textContent = label + ": " + text;
+      toggle.textContent = c.want ? "Отключить" : "Подключить";
+    }
+    function schedule() {
+      if (!c.want) return;
+      const delay = Math.min(10000, 500 * 2 ** c.retry++);
+      c.timer = setTimeout(open, delay);
+    }
+    function open() {
+      clearTimeout(c.timer);
+      const url = getUrl();
+      if (!url) { c.want = false; set("off", "вставьте адрес"); return; }
+      set("wait", "подключение…");
+      let ws;
+      try { ws = new WebSocket(url); } catch (e) { log(label + ": ошибка адреса — " + e.message, "e"); return schedule(); }
+      c.ws = ws;
+      ws.onopen = () => {
+        c.retry = 0;
+        ws.send(JSON.stringify({ type: "hello", role: "figma-plugin", token: getToken() || undefined }));
+        set("on", "подключено");
+        log("Подключено к " + url, "k");
+        clearInterval(c.keepAlive);
+        c.keepAlive = setInterval(() => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "ping" })); }, 30000);
+      };
+      ws.onmessage = (event) => {
+        let msg;
+        try { msg = JSON.parse(event.data); } catch (e) { return log(label + ": не JSON — " + short(event.data), "e"); }
+        if (msg.type === "ping") return ws.send(JSON.stringify({ type: "pong" }));
+        if (msg.type === "pong") return;
+        if (msg.type === "error") return log(label + ": " + msg.message, "e");
+        if (msg.type === "welcome") return log("Мост: " + (msg.message || "готов"), "m");
+        if (!msg.command || msg.id === undefined) return log(label + ": пропущено " + short(msg), "m");
+        log(`→ ${label} ${msg.id} ${msg.command} ${short(msg.params || {}, 160)}`, "m");
+        runCommand(c, msg.id, msg.command, msg.params);
+      };
+      ws.onclose = (e) => {
+        clearInterval(c.keepAlive);
+        if (c.ws === ws) c.ws = null;
+        if (c.want) { set("wait", "нет связи, переподключение…"); schedule(); }
+        else set("off", "не подключено");
+        if (e.code === 4000) log(label + ": вытеснено другим окном плагина", "m");
+        else if (e.code !== 1000) log(`${label}: соединение закрыто (${e.code})`, "m");
+      };
+      ws.onerror = () => {};
+    }
+    c.start = () => { c.want = true; c.retry = 0; open(); };
+    c.stop = () => { c.want = false; clearTimeout(c.timer); if (c.ws) c.ws.close(1000); set("off", "не подключено"); };
+    c.reply = (o) => { if (c.ws && c.ws.readyState === WebSocket.OPEN) c.ws.send(JSON.stringify(o)); };
+    toggle.onclick = () => { saveSettings(); c.want ? c.stop() : c.start(); };
+    set("off", "не подключено");
+    return c;
+  }
+
+  const local = Connection("local", "Компьютер", $("conn-local"), () => $("url").value.trim() || DEFAULT_URL, () => $("token").value.trim());
+  const cloud = Connection("cloud", "Облако", $("conn-cloud"), () => $("cloudUrl").value.trim(), () => "");
+
+  // ---------- Настройки ----------
+  function settings() {
+    return { url: $("url").value.trim(), token: $("token").value.trim(), auto: $("auto").checked,
+      cloudUrl: $("cloudUrl").value.trim(), cloudAuto: $("cloudAuto").checked };
+  }
+  function saveSettings() { toPlugin({ type: "save-settings", settings: settings() }); }
+  function applySettings(s) {
+    $("url").value = s.url || DEFAULT_URL;
+    $("token").value = s.token || "";
+    $("auto").checked = !!s.auto;
+    $("cloudUrl").value = s.cloudUrl || "";
+    $("cloudAuto").checked = !!s.cloudAuto;
+    if (s.auto) local.start();
+    if (s.cloudAuto && s.cloudUrl) cloud.start();
+  }
+  ["url", "token", "auto", "cloudUrl", "cloudAuto"].forEach((id) => $(id).addEventListener("change", saveSettings));
+
+  // ---------- Ручная консоль ----------
+  // Принимает { command, params } или массив таких объектов (выполнится как batch).
+  $("run").onclick = () => {
+    let input;
+    try { input = JSON.parse($("cmd").value); } catch (e) { return log("JSON: " + e.message, "e"); }
+    const id = "m" + ++seq;
+    if (Array.isArray(input)) {
+      log(`→ ${id} batch (${input.length})`, "m");
+      runCommand(null, id, "batch", { commands: input });
+    } else {
+      log(`→ ${id} ${input.command}`, "m");
+      runCommand(null, id, input.command, input.params);
+    }
+  };
+  $("clear").onclick = () => { $("log").innerHTML = ""; };
+
+  const EXAMPLES = {
+    ping: { command: "ping" },
+    selection: { command: "get_selection", params: { depth: 1 } },
+    slide: [
+      { command: "create_frame", params: { name: "Slide 01", width: 1920, height: 1080, fill: { type: "linear", stops: ["#0F172A", "#1E293B"], angle: 90 } } },
+      { command: "create_text", params: { parentId: "$0", text: "Заголовок слайда", x: 120, y: 120, width: 1200, fontFamily: "Inter", fontStyle: "Bold", fontSize: 96, lineHeight: "110%", fill: "#F8FAFC" } },
+      { command: "create_text", params: { parentId: "$0", text: "Подзаголовок: тезис в одну строку", x: 120, y: 300, width: 1200, fontSize: 40, fill: "#94A3B8" } },
+      { command: "create_rectangle", params: { parentId: "$0", x: 120, y: 420, width: 160, height: 8, cornerRadius: 4, fill: "#38BDF8" } },
+      { command: "select", params: { ids: ["$0"] } }
+    ],
+    cards: [
+      { command: "create_frame", params: { name: "Cards", layoutMode: "HORIZONTAL", itemSpacing: 24, padding: 32, primaryAxisSizingMode: "AUTO", counterAxisSizingMode: "AUTO", fill: "#F1F5F9", cornerRadius: 16 } },
+      { command: "create_frame", params: { parentId: "$0", name: "Card 1", width: 280, height: 180, fill: "#FFFFFF", cornerRadius: 12, effects: [{ type: "shadow", color: "#0F172A1A", y: 8, blur: 24 }] } },
+      { command: "clone_node", params: { id: "$1", parentId: "$0", name: "Card 2" } },
+      { command: "clone_node", params: { id: "$1", parentId: "$0", name: "Card 3" } },
+      { command: "select", params: { ids: ["$0"] } }
+    ],
+    svg: [
+      { command: "create_svg", params: { name: "Icon / Check", svg: "<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='#14AE5C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='m8 12 3 3 5-6'/></svg>" } },
+      { command: "select", params: { ids: ["$0"] } }
+    ]
+  };
+  $("example").onchange = (e) => {
+    const ex = EXAMPLES[e.target.value];
+    if (ex) $("cmd").value = JSON.stringify(ex, null, 2);
+    e.target.value = "";
+  };
+
+  toPlugin({ type: "load-settings" });
+</script>
+</body>
+</html>

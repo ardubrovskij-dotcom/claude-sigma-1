@@ -1,0 +1,41 @@
+[
+ [
+  { "command": "create_frame", "params": { "name": "01 — Титул", "width": 1920, "height": 1080, "clipsContent": true, "fill": "#0F1E2E" } },
+  { "command": "create_ellipse", "params": { "parentId": "$0", "name": "Motif / Pulse", "x": 1240, "y": 520, "width": 1100, "height": 1100, "fill": "#10B981" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Kicker", "x": 140, "y": 300, "text": "ФИНПУЛЬС · SEED", "fontFamily": "Manrope", "fontStyle": "SemiBold", "fontSize": 22, "letterSpacing": "8%", "fill": "#10B981" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Title", "x": 140, "y": 360, "width": 1050, "text": "Деньги под контролем без таблиц и чувства вины", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 112, "lineHeight": "104%", "letterSpacing": "-2%", "fill": "#F3F7F6" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Subtitle", "x": 140, "y": 760, "width": 800, "text": "Приложение учёта личных финансов для молодых специалистов 22–35 лет", "fontFamily": "Manrope", "fontStyle": "Regular", "fontSize": 34, "lineHeight": "135%", "fill": "#F3F7F6" } }
+ ],
+ [
+  { "command": "create_frame", "params": { "name": "02 — Проблема", "width": 1920, "height": 1080, "clipsContent": true, "fill": "#F3F7F6" } },
+  { "command": "create_rectangle", "params": { "parentId": "$0", "name": "Motif / Bar", "x": 1340, "y": 0, "width": 580, "height": 1080, "fill": "#0F1E2E" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Title", "x": 140, "y": 320, "width": 1080, "text": "Зарплата приходит — и через две недели непонятно, куда она ушла", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 80, "lineHeight": "110%", "fill": "#0F1E2E" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Body", "x": 140, "y": 720, "width": 900, "text": "Таблицы бросают через неделю, банковские приложения показывают траты, но не помогают их менять", "fontFamily": "Manrope", "fontStyle": "Regular", "fontSize": 32, "lineHeight": "140%", "fill": "#334155" } }
+ ],
+ [
+  { "command": "create_frame", "params": { "name": "03 — Тракшн", "width": 1920, "height": 1080, "clipsContent": true, "fill": "#FFFFFF" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Title", "x": 140, "y": 120, "width": 1300, "text": "Растём без платного трафика", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 80, "fill": "#0F1E2E" } },
+  { "command": "create_frame", "params": { "parentId": "$0", "name": "Metrics", "x": 140, "y": 420, "width": 1640, "height": 440, "layoutMode": "HORIZONTAL", "itemSpacing": 40, "primaryAxisSizingMode": "FIXED", "counterAxisSizingMode": "FIXED" } },
+  { "command": "create_frame", "params": { "parentId": "$2", "name": "Metric / Users", "layoutMode": "VERTICAL", "itemSpacing": 16, "padding": 48, "fill": "#0F1E2E", "cornerRadius": 32, "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL" } },
+  { "command": "create_text", "params": { "parentId": "$3", "name": "Value", "text": "120 000", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 96, "fill": "#10B981" } },
+  { "command": "create_text", "params": { "parentId": "$3", "name": "Label", "text": "активных пользователей", "fontFamily": "Manrope", "fontStyle": "Regular", "fontSize": 30, "fill": "#F3F7F6", "layoutSizingHorizontal": "FILL" } },
+  { "command": "create_frame", "params": { "parentId": "$2", "name": "Metric / Growth", "layoutMode": "VERTICAL", "itemSpacing": 16, "padding": 48, "fill": "#F3F7F6", "cornerRadius": 32, "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL" } },
+  { "command": "create_text", "params": { "parentId": "$6", "name": "Value", "text": "+18%", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 96, "fill": "#0F1E2E" } },
+  { "command": "create_text", "params": { "parentId": "$6", "name": "Label", "text": "рост месяц к месяцу", "fontFamily": "Manrope", "fontStyle": "Regular", "fontSize": 30, "fill": "#334155", "layoutSizingHorizontal": "FILL" } },
+  { "command": "create_frame", "params": { "parentId": "$2", "name": "Metric / Retention", "layoutMode": "VERTICAL", "itemSpacing": 16, "padding": 48, "fill": "#F3F7F6", "cornerRadius": 32, "layoutSizingHorizontal": "FILL", "layoutSizingVertical": "FILL" } },
+  { "command": "create_text", "params": { "parentId": "$9", "name": "Value", "text": "46%", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 96, "fill": "#0F1E2E" } },
+  { "command": "create_text", "params": { "parentId": "$9", "name": "Label", "text": "удержание на 30-й день", "fontFamily": "Manrope", "fontStyle": "Regular", "fontSize": 30, "fill": "#334155", "layoutSizingHorizontal": "FILL" } }
+ ],
+ [
+  { "command": "create_frame", "params": { "name": "04 — Ценность", "width": 1920, "height": 1080, "clipsContent": true, "fill": "#10B981" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Metric", "x": 140, "y": 240, "text": "9 400 ₽", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 320, "lineHeight": "100%", "letterSpacing": "-4%", "fill": "#0F1E2E" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Caption", "x": 150, "y": 640, "width": 1000, "text": "в месяц экономит средний пользователь ФинПульса", "fontFamily": "Manrope", "fontStyle": "SemiBold", "fontSize": 44, "lineHeight": "125%", "fill": "#0F1E2E" } }
+ ],
+ [
+  { "command": "create_frame", "params": { "name": "05 — Раунд", "width": 1920, "height": 1080, "clipsContent": true, "fill": "#0F1E2E" } },
+  { "command": "create_ellipse", "params": { "parentId": "$0", "name": "Motif / Pulse", "x": -360, "y": -420, "width": 900, "height": 900, "fill": "#10B981" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Kicker", "x": 760, "y": 360, "text": "SEED-РАУНД", "fontFamily": "Manrope", "fontStyle": "SemiBold", "fontSize": 24, "letterSpacing": "8%", "fill": "#10B981" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Title", "x": 760, "y": 420, "width": 1020, "text": "Ищем 60 млн ₽", "fontFamily": "Manrope", "fontStyle": "Bold", "fontSize": 140, "lineHeight": "100%", "fill": "#F3F7F6" } },
+  { "command": "create_text", "params": { "parentId": "$0", "name": "Body", "x": 760, "y": 620, "width": 900, "text": "Давай обсудим, как вместе дойти до миллиона пользователей", "fontFamily": "Manrope", "fontStyle": "Regular", "fontSize": 36, "lineHeight": "135%", "fill": "#F3F7F6" } }
+ ]
+]

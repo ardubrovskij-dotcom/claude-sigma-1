@@ -1,0 +1,27 @@
+{
+  "name": "claude-sigma-bridge",
+  "version": "1.0.0",
+  "description": "MCP bridge between Claude and the Claude for Figma by Dubrovskiy Figma plugin",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --loader:.md=text --external:bufferutil --external:utf-8-validate --minify --outfile=mcpb/server/index.js",
+    "typecheck": "tsc",
+    "pack": "npm run build && mcpb validate mcpb/manifest.json && mcpb pack mcpb claude-sigma.mcpb",
+    "start": "npm run build && node mcpb/server/index.js",
+    "test": "npm run build && node test/bridge.test.mjs && node test/multi.test.mjs && node test/e2e.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "https-proxy-agent": "^9.1.0",
+    "ws": "^8.22.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@anthropic-ai/mcpb": "^2.1.2",
+    "@types/node": "^26.6.5",
+    "@types/ws": "^8.18.2",
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.64.0",
+    "typescript": "^7.0.2"
+  },
+  "private": true
+}

@@ -1,0 +1,17 @@
+{
+  "name": "claude-sigma-figma-plugin",
+  "version": "1.0.0",
+  "description": "Figma plugin that executes drawing commands sent by Claude",
+  "scripts": {
+    "build": "esbuild src/code.ts --bundle --target=es2017 --outfile=dist/code.js",
+    "watch": "npm run build -- --watch",
+    "typecheck": "tsc",
+    "test": "npm run build && node test/manifest.test.js && node test/smoke.test.js"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.141.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "private": true
+}

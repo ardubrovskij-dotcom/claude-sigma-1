@@ -1,0 +1,21 @@
+{
+  "name": "Claude for Figma by Dubrovskiy",
+  "id": "claude-sigma-dev",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "wss://*.workers.dev"
+    ],
+    "reasoning": "Облачный ретранслятор Claude for Figma (Cloudflare Workers) передаёт команды из облачных сессий Claude в этот плагин.",
+    "devAllowedDomains": [
+      "ws://localhost:3055",
+      "http://localhost:3055"
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "manifest_version": "0.2",
+  "name": "claude-sigma",
+  "display_name": "Claude for Figma by Dubrovskiy",
+  "version": "0.3.0",
+  "description": "Рисует в Figma через плагин Claude for Figma by Dubrovskiy: фреймы, текст, векторы, auto layout, слайды.",
+  "long_description": "Мост между Claude и плагином Claude for Figma by Dubrovskiy в Figma Desktop. Claude отправляет команды, плагин выполняет их в открытом файле через официальный Plugin API. Плагин нужно запустить в Figma (Plugins → Development → Claude for Figma by Dubrovskiy) и нажать «Подключить».",
+  "author": { "name": "Dubrovskiy" },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "SIGMA_PORT": "${user_config.port}",
+        "SIGMA_TOKEN": "${user_config.token}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "figma_status", "description": "Проверить подключение плагина и открытый файл" },
+    { "name": "figma_command", "description": "Выполнить одну команду плагина" },
+    { "name": "figma_batch", "description": "Выполнить пакет команд (слайд за один вызов)" },
+    { "name": "figma_screenshot", "description": "PNG-снимок узла для проверки результата" }
+  ],
+  "user_config": {
+    "port": {
+      "type": "number",
+      "title": "Порт",
+      "description": "Порт WebSocket для плагина Figma (в плагине: ws://localhost:<порт>)",
+      "default": 3055,
+      "required": false
+    },
+    "token": {
+      "type": "string",
+      "title": "Токен (необязательно)",
+      "description": "Если задан, плагин должен указать такой же токен",
+      "sensitive": true,
+      "default": "",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": { "node": ">=18.0.0" }
+  },
+  "license": "MIT"
+}
